@@ -1,0 +1,936 @@
+##############################################################################
+## BATTLE SYSTEM!!!!!!
+# don't allow mid-battle saves, it might mess things up...
+
+# battle text is a special character
+define bt = Character(None, window_background="gui/textbox.png") #you can replace the textbox image, font, whatever else
+# add these in if you want: #what_font="", what_size=, what_color=""
+
+# player stat values are set by a list so it can check the corresponding stat to what level you are
+define HPvalues = [0, 30,34,42,48,50, 54,58,62,150]
+define ATKvalues = [0, 5,6,8,9,12, 15,19,23,27,32]
+define DEFvalues = [0, 3,4,5,7,9, 12,14,17,20,23]
+define LUCvalues = [0, 1,2,4,6,7, 9,10,12,13,15]
+define burn = False
+define sugar = False
+define guard = False
+define e1 = False
+define e2 = False
+define lohp = False
+define poison = False
+define parry = False
+define frozen = False
+
+label pre_battle:
+
+    ## put this block at the beginning of your start label
+    python:
+        # disable rollback during battle
+        battling = False
+        renpy.suspend_rollback(battling)
+
+        # battle stats
+        playerLV = 1
+        playerMAXHP = HPvalues[9]
+        playerHP = HPvalues[9]
+        playerATK = ATKvalues[5]
+        playerDEF = DEFvalues[5]
+        playerLUC = LUCvalues[1]
+        playerEXP = 0
+
+        # calculate exp to next level
+        nextEXP = round( 0.04 * (playerLV ** 3) + 0.8 * (playerLV ** 2) + 2 * playerLV)
+        # this formula is from disgaea, apparently!
+        # http://howtomakeanrpg.com/a/how-to-make-an-rpg-levels.html
+
+        # enemy defaults
+        enemyHP = 1
+        seen_enemies = []
+
+    #
+
+    # put the rest of this in script.rpy wherever you want the enter a battle
+
+    scene ca ves # fullscreen background
+    show stage bg # frame the characters stand inside (feel free to remove)
+
+    play music "Red Gaze Battle!.opus"
+
+    # set the enemy to fight
+    $ enemy = m_goop
+
+    # and show their sprite!
+    show enemy goop idle at battle_enemy1, zoomx(3)
+
+label battle_start:
+
+    #SETUP TIME
+    python:
+        _game_menu_screen = None
+        _history = False
+        quick_menu = False
+
+        battling = True
+        turn = 0
+        charge = 0
+        battle_events = [] # tracks one-time conditional lines
+
+        atkbuff = 0
+        defbuff = 0
+        CRIT = False
+
+        enemy.see_enemy()
+        enemyHP = enemy.MAXHP
+
+    show player syrup idle at battle_party1, zoomx(3) behind enemy
+
+    n "[enemy.name!t] picks a fight!!"
+
+    show screen battleoverlay
+label battle_turn:
+    # start of player turn
+    $ turn += 1
+    if parry:
+        play music "Red Gaze Battle!.opus"
+    $ guard = False
+    show enemy goop idle at battle_enemy1, zoomx(3)
+    show player syrup idle at battle_party1, zoomx(3) behind enemy
+    play music "Red Gaze Battle!.opus"
+
+    if lohp:
+        show player idlez
+
+    if not lohp and not charge > 9 and charge > 4:
+        show player syrup electro
+    if not lohp and charge > 9:
+        show player syrup kerauno 
+
+    call screen battle_menu
+
+label battle_secret:
+
+        $ InvItem(*item_stone).pickup(1)
+        n "Found a Nernas Shard!"
+        $ Shard_hunter.grant()
+        rg "Dude, we are in the middle of a fight."
+        n "Stop complaining, or I'll use another protagonist for the main game."
+
+label battle_attack:
+    # damage calculation
+    $ damage = playerATK*2 + atkbuff - enemy.DEF*2
+    n "Red Gaze kicks!"
+    show player syrup attack
+    play sound "kick.mp3"
+
+    if frozen:
+        $ damage = playerATK*5 + atkbuff - enemy.DEF*2
+        n "Red Gaze breaks the Frozen foe!"
+        show player syrup attack
+        play sound "kick.mp3"
+
+    if electro:
+        $ charge += 1
+        $ damage = playerATK*0
+        jump battle_enemy_turn
+
+    if lohp:
+        show player syrup attackz
+
+    # roll for crits/misses
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*1.5)
+
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+    if charge==7:
+        n "Nice! But you can stop now."
+
+    if charge==8:
+        n "That is literally not how you stop."
+
+    if charge==9:
+        n "I realize now that you are ignoring me. Real mature."
+        rg "Let them play the way they want to!"
+        n "Don't you have a skill to use?"
+        rg "Pft-"
+
+label battle_thunder:
+
+    $ damage = playerATK*5.5 + atkbuff - enemy.DEF*2
+    show player syrup lightning 
+    play sound "hollow.mp3"
+    jump battle_damage
+
+    # roll for crits/misses
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*1.5)
+
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_serpent:
+    $ poison = False
+    $ damage = playerATK*7.5 + atkbuff - enemy.DEF*2
+    show player syrup lightning 
+    play sound "hollow.mp3"
+    jump battle_damage
+
+    # roll for crits/misses
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*1.5)
+
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_keraunos:
+
+    $ Lyra_Thorsdottir.grant()
+    $ charge -= 10
+    $ damage = playerATK*8 + atkbuff - enemy.DEF*2
+    show player keraunos
+    play sound "kerau.mp3"
+    jump battle_damage
+
+label battle_frost:
+    show player syrup hail
+    # damage calculation
+    $ damage = playerATK*3 + atkbuff - enemy.DEF*2
+    n "Red Gaze attacks!"
+    play sound "ice.mp3"
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    # 1 in 10chance of critical hit
+    if d10roll > 2:
+        $ frozen = True
+        $ damage = int(damage*2.1)
+        n "Target is Frozen!"    
+
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+        jump battle_miss
+
+label battle_rose:
+show player syrup vines
+$ damage = playerATK*3 + atkbuff - enemy.DEF*2
+rg "Be torn to shreds."
+
+# roll for crits/misses
+$ d6roll = renpy.random.randint(1, 6)
+
+# 1 in 6 chance of critical hit
+if d6roll==3:
+    $ CRIT = True
+    $ damage = int(damage*1.4)
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+if poison:
+    show player syrup vines
+    play sound "whip.mp3"
+    $ damage = int(playerMAXHP/10)
+    $ playerHP += damage
+    show screen showheal
+    if playerHP > playerMAXHP:
+        $ playerHP = playerMAXHP
+
+    show player syrup vines
+    $ damage = playerATK*3 + atkbuff - enemy.DEF*2
+    rg "Be torn to shreds."
+
+    # roll for crits/misses
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*1.4)
+        jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_fire:
+    # damage calculation
+    $ damage = playerATK*2.5 + atkbuff - enemy.DEF*2
+    $ burn = True
+    $ burn_turns = 3
+    n "Red Gaze attacks!"
+    show player syrup fire
+    play sound "flame.mp3"
+    if lohp:
+        show player syrup firez
+
+    # roll for crits/misses
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==1:
+        $ CRIT = True
+        $ damage = int(damage*1.5)
+
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_red:
+    # damage calculation
+    $ damage = playerATK*4 + atkbuff - enemy.DEF*2
+    rg "Rip, Muramasa."
+    show player syrup red
+    play sound "red.mp3"
+
+    # roll for crits/misses
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*1.4)
+
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_redluck:
+    # damage calculation
+    $ damage = playerATK*4 + atkbuff - enemy.DEF*2
+    rg "Rip, Muramasa."
+    show player syrup red
+    play sound "red.mp3"
+
+    # roll for crits/misses
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll < 5:
+        $ CRIT = True
+        $ damage = int(damage*1.2)
+        
+        jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_redd:
+    $ Last_Resort.grant()    
+    # damage calculation
+    $ damage = playerATK*9.5 + atkbuff - enemy.DEF*2
+    rg "This is the end."
+    show player syrup redd
+    play sound "red.mp3"
+    play sound "sword.mp3"
+    play sound "red.mp3"
+
+    # roll for crits/misses
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*1.1)
+
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_defend:
+    $ guard = True
+    show player guard
+    n "Red Gaze is guarding!"
+    jump battle_enemy_turn
+    if lohp:
+        show player guardz
+
+label battle_slam:
+    show player syrup slam
+    $ damage = playerATK*4.5 + atkbuff - enemy.DEF*2
+    n "Red Gaze is shattering her foe!"
+    $ frozen = False
+    jump battle_enemy_turn
+    if lohp:
+        show player guardz
+
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*2.3)
+
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_sugar:
+    $ sugar = True
+    $ inv.remove("item_sugar")
+    show player guard
+    n "Red Gaze, uh... Throws some sugar at her foe, I guess."
+    jump battle_enemy_turn
+    if lohp:
+        show player guardz
+
+label battle_poison:
+    $ poison = True
+    $ inv.remove("item_heart")
+    show player guard
+    n "Red Gaze decides to be a vegan."
+    rg "Oh, put a sock in it."
+    rg "Blegh, I don't remember it being this sour."
+    rg "Take this!" with hpunch
+    n "Enemy is Poisoned!"
+    jump battle_enemy_turn
+    if lohp:
+        show player guardz
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_miss:
+    show screen showmiss
+    show enemy dodge
+    n "But it missed!"
+    jump battle_attack_result
+
+label battle_damage:
+
+    # can't deal negative damage
+    if damage < 0:
+        $ damage = 0
+    $ enemyHP -= damage
+    # enemy can't have negative hp
+    if enemyHP < 0:
+        jump battle_won
+
+    if CRIT:
+        show screen showcrit with vpunch and hpunch
+        play sound "crit.mp3"
+    else:
+        show screen showdamage("enemy")
+
+    show enemy hit
+    if CRIT:
+        n "A BRUTAL BLOW!!" with vpunch and hpunch
+        play sound "crit.mp3"
+    else:
+        rg "TAKE THAT!"
+    $ CRIT= False
+
+label battle_attack_result:
+
+    if enemyHP <= 0:
+        jump battle_won
+
+    if playerHP <= 0:
+        jump pre_battle
+
+        show player idle
+        show enemy idle
+
+    jump battle_enemy_turn
+
+##############################################################################
+## ENEMY TURN
+
+label battle_enemy_turn:
+
+    if burn and not sugar:
+        "Hero Burns!"
+        # can't deal negative damage
+        $ damage = playerATK
+        if damage < 0:
+            $ damage = 0
+        $ enemyHP -= damage
+        # enemy can't have negative hp
+        $ burn_turns -= 1
+
+        # Remove burn when it expires
+        if burn_turns <= 0:
+            $ burn = False
+            "The burn wears off."
+        if enemyHP < 0:
+            jump battle_won
+
+    if burn and sugar:
+        n "The target is hurt by Black Burn!"
+        # can't deal negative damage
+        $ damage = playerATK*0.5
+        if damage < 0:
+            $ damage = 0
+        $ enemyHP -= damage
+        # enemy can't have negative hp
+        if enemyHP < 0:
+            jump battle_won
+
+    if poison:
+        "Hero is hurt by poison!"
+        # can't deal negative damage
+        $ damage = playerATK*1.5
+        if damage < 0:
+            $ damage = 0
+        $ enemyHP -= damage
+        # enemy can't have negative hp
+        # Remove burn when it expires
+        if enemyHP < 0:
+            jump battle_won
+
+    if poison and burn:
+        "The flames boil the poison, turning into Toxic Blaze!"
+        # can't deal negative damage
+        $ burn = False
+        $ poison = False
+        $ Nonmetal_alchemist.grant()
+        $ damage = playerATK*3.5
+        if damage < 0:
+            $ damage = 0
+        $ enemyHP -= damage
+        # enemy can't have negative hp
+        if enemyHP < 0:
+            jump battle_won
+
+    $ d12roll = renpy.random.randint(1, 12)
+
+    if d12roll < 6:
+        jump battle_enemy_damage
+
+    if d12roll > 6:
+        jump battle_enemy_damage2
+
+    else:
+        jump battle_enemy_damage3
+
+label battle_enemy_damage:
+
+    n "[enemy.name!t] unleashes his true power!!"
+
+    play sound "kick.mp3"
+
+    $ e1 = True
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump enemy_miss
+
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*1.5)
+
+    $ damage = (enemy.ATK*4 - playerDEF*2 - defbuff)
+
+    if guard: #halve damage
+        $ damage = int(damage/2)
+
+    if damage <= 0: #can't do negative damage
+    #always take at least 1 damage unless you guard
+        if guard:
+            $ damage = 15
+        else:
+            $ damage = 30
+
+    # now apply to syrup...
+    $ playerHP -= damage
+    if guard:
+        $ damage = 15
+    else:
+        $ damage = 30
+
+    if playerHP<=0:
+        $ playerHP = 0
+
+    show screen showdamage("player")
+
+    if guard and playerHP > 0:
+        show player guardhit
+    if lohp and guard and playerHP > 0:
+        show player guardhitz
+    if lohp and playerHP > 0:
+        show player hitz 
+    else:
+        show player hit
+
+    # different text for different damage results
+    if guard and playerHP > 0:
+        if damage>0:
+            rg "That's not gonna be enough!"
+        else:
+            n "PERFECT BLOCK!"
+    else:
+        rg "OOF!"
+
+        jump battle_enemy_turn_end
+
+label battle_enemy_turn_end:
+    
+    show player idle
+    show enemy idle
+# you lose when your HP runs out
+    if playerHP <= 0:
+        jump battle_lost
+# if you hit 25% health, warn the player
+    if playerHP <= playerMAXHP/3:
+        if "lowHP" not in battle_events:
+            jump battle_lowhp
+
+    jump battle_turn
+
+label battle_shock:
+    show player syrup electro
+    jump battle_turn
+
+label battle_keraun:
+    show player syrup kerauno
+    jump battle_turn
+
+label battle_lowhp:
+    rg "Ugh, not bad...!"
+    $ lohp = True
+    $ battle_events.append("lowHP")
+    jump battle_turn
+
+label battle_lost:
+    hide screen battleoverlay
+
+    show player down
+    n "DEFEAT..."
+    jump pre_battle
+
+label battle_won:
+    hide screen battleoverlay
+    rg "Sayonara capybara!"
+    if lohp:
+        rg "Ah, gotta fix my hair."
+
+    show player win
+    show enemy down
+
+    stop music fadeout 1
+
+    n "HERO STOPPED!"
+    jump victory2
+
+    # gain exp and possibly level up
+    if not playerLV==10: # level cap
+        $ playerEXP += enemy.EXP
+        n "Red Gaze gains [enemy.EXP] experience points!"
+        if playerEXP >= int(nextEXP):
+            call levelup
+
+    jump battle_done
+
+label battle_enemy_damage2:
+
+    show screen QTEdown(3, "missedit3") #seconds to fail, label to jump on fail
+    menu:
+        "My, what lovely feet!"
+        "PARRY IT!!":
+            hide screen QTEdown
+            jump choice3
+
+label missedit3:
+    hide screen QTEdown
+
+    "You failed to parry!"
+
+    $ playerHP -= 40
+
+    play sound "kick.mp3"
+
+    show player hit
+
+    if playerHP <= 0:
+        jump battle_lost
+
+    if playerHP <= playerMAXHP/3:
+        if "lowHP" not in battle_events:
+            show player idlez
+            jump battle_lowhp2
+
+    jump battle_turn  
+
+label choice3: 
+    show player syrup parry
+    $ damage = playerATK
+    if untouchable:
+        $ damage = playerATK*5
+
+    if untouchable and charge > 4:
+        play sound "parry3.mp3"        
+        show blightt:
+          xalign .65
+          yalign .5
+        $ damage = playerATK*6.5
+        $ charge -= 5
+
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*1.5)
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+    
+    $ enemyHP -= damage
+    # enemy can't have negative hp
+    if enemyHP < 0:
+        jump battle_won2
+    play music "Red Gaze Battle!.opus"
+    play sound "parry3.mp3"
+    n "Nice job!!"
+    jump battle_turn
+
+label battle_lowhp2:
+    rg "Ugh, not bad...!"
+    $ battle_events.append("lowHP")
+    show player idlez
+    jump battle_turn
+
+label battle_lost2:
+    hide screen battleoverlay
+
+    show player down
+    n "DEFEAT..."
+    jump pre_battle
+
+label battle_won2:
+    hide screen battleoverlay
+    rg "Sayonara capybara!"
+    if lohp:
+        rg "Ah, gotta fix my hair."
+
+        show player win
+        show enemy down
+
+    stop music fadeout 1
+
+    n "HERO STOPPED!"
+    jump victory2
+
+    # gain exp and possibly level up
+    if not playerLV==10: # level cap
+        $ playerEXP += enemy.EXP
+        n "Red Gaze gains [enemy.EXP] experience points!"
+        if playerEXP >= int(nextEXP):
+            call levelup
+
+    jump battle_done
+
+label battle_enemy_damage3:
+
+    n "Red Gaze is Stunned!"
+
+    play sound "kick.mp3"
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump enemy_miss
+
+    $ d6roll = renpy.random.randint(1, 4)
+
+    # 1 in 6 chance of critical hit
+    if d6roll==1:
+        $ CRIT = True
+        $ damage = int(damage*2.5)
+
+    $ damage = (enemy.ATK - playerDEF*4 - defbuff)
+
+    if guard: #halve damage
+        $ damage = int(damage/2)
+
+    if damage <= 0: #can't do negative damage
+    #always take at least 1 damage unless you guard
+        if guard:
+            $ damage = 10
+        else:
+            $ damage = 20
+
+    # now apply to syrup...
+    $ playerHP -= damage
+    if guard:    
+        $ damage = 10
+    else:
+        $ damage = 20
+
+    if playerHP<=0:
+        $ playerHP = 0
+
+    show screen showdamage("player")
+
+    if guard and playerHP > 0:
+        show player guardhit
+    if lohp and guard and playerHP > 0:
+        show player guardhitz
+    if lohp and playerHP > 0:
+        show player hitz 
+    else:
+        show player hit
+
+    # different text for different damage results
+    if guard and playerHP > 0:
+        if damage>0:
+            rg "That's not gonna be enough!"
+        else:
+            n "PERFECT BLOCK!"
+    else:
+        rg "OOF!"
+
+    jump battle_enemy_turn_end3
+
+label enemy_miss:
+    n "But it missed!"
+    jump battle_turn
+
+label battle_enemy_turn_end3:
+    show player idle
+    show enemy idle
+# you lose when your HP runs out
+    if playerHP <= 0:
+        jump battle_lost
+# if you hit 25% health, warn the player
+    if playerHP <= playerMAXHP/3:
+        if "lowHP" not in battle_events:
+            show player idlez
+            jump battle_lowhp3
+
+    jump battle_enemy_turn
+
+label battle_lowhp3:
+    rg "Ugh, not bad...!"
+    $ battle_events.append("lowHP")
+    $ lohp = True                                                                                                                                                                                                                                                                                                
+    jump battle_enemy_turn
+
+
+label battle_lost3:
+    hide screen battleoverlay
+
+    show player down
+    n "DEFEAT..."
+    jump pre_battle
+
+label battle_won3:
+    hide screen battleoverlay
+    rg "Sayonara capybara!"
+    if lohp:
+        rg "Ah, gotta fix my hair."
+
+    show player win
+    show enemy idle
+
+    stop music fadeout 1
+
+    n "HERO STOPPED!"
+    jump victory
+
+    # gain exp and possibly level up
+    if not playerLV==10: # level cap
+        $ playerEXP += enemy.EXP
+        n "Red Gaze gains [enemy.EXP] experience points!"
+        if playerEXP >= int(nextEXP):
+            call levelup
+
+    jump battle_done
+
+##############################################################################
+## OUTCOME
+
+label levelup:
+
+    if playerEXP >= int(nextEXP) and not playerLV==10:
+        $ playerLV += 1
+        # calculate amount of xp needed at your current level
+        $ nextEXP = round( 0.04 * (playerLV ** 3) + 0.8 * (playerLV ** 2) + 2 * playerLV)
+        #loop here in case you get enough xp to level twice
+        jump levelup
+
+    n "Red Gaze is now level [playerLV]!"
+    # increase stats
+    $ playerMAXHP = HPvalues[playerLV]
+    $ playerATK = ATKvalues[playerLV]
+    $ playerDEF = DEFvalues[playerLV]
+    $ playerLUC = LUCvalues[playerLV]
+
+    return
+
+label battle_drops:
+
+    $ newitem = InvItem(*set_item(enemy.drop))
+    show screen reward(newitem.image)
+    $ newitem.pickup()
+
+    n "The [enemy.name!t] left behind a \n{color=#007dff}[newitem.name!t]{/color}!"
+
+    hide screen reward
