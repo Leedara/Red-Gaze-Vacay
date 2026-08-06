@@ -2,7 +2,7 @@ init offset = -1
 
 ## IMPORTANT! ## IF YOU USE THE ITEM SCRIPTS you can take these lines out
 
-## hello there dude
+## hello there dudeson!!!!!
 
 # defined in item-screens.rpy
 transform zoomx(x):
