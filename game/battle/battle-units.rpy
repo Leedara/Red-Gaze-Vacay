@@ -80,6 +80,14 @@ image player syrup electro:
     pause .1
     "player syrup idle3 electro"
     pause .1
+    "player syrup idle1"
+    pause .2
+    "player syrup idle2"
+    pause .2
+    "player syrup idle1"
+    pause .2
+    "player syrup idle3"
+    pause .2
     repeat
 
 image player syrup kerauno:
@@ -89,6 +97,14 @@ image player syrup kerauno:
     pause .1
     "player syrup idle3 kerauno"
     pause .1
+    "player syrup idle1"
+    pause .2
+    "player syrup idle2"
+    pause .2
+    "player syrup idle1"
+    pause .2
+    "player syrup idle3"
+    pause .2
     repeat
 
 image player syrup attack:

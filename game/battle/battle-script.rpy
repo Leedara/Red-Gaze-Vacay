@@ -7,7 +7,7 @@ define bt = Character(None, window_background="gui/textbox.png") #you can replac
 # add these in if you want: #what_font="", what_size=, what_color=""
 
 # player stat values are set by a list so it can check the corresponding stat to what level you are
-define HPvalues = [0, 30,34,42,48,50, 54,58,62,150]
+define HPvalues = [0, 30,34,42,48,50, 54,58,62,260]
 define ATKvalues = [0, 5,6,8,9,12, 15,19,23,27,32]
 define DEFvalues = [0, 3,4,5,7,9, 12,14,17,20,23]
 define LUCvalues = [0, 1,2,4,6,7, 9,10,12,13,15]
@@ -20,6 +20,8 @@ define lohp = False
 define poison = False
 define parry = False
 define frozen = False
+define two = False
+define four = False
 
 label pre_battle:
 
@@ -86,12 +88,21 @@ label battle_start:
 
     n "[enemy.name!t] picks a fight!!"
 
-    show screen battleoverlay
+    show screen battleoverlay
+
 label battle_turn:
     # start of player turn
     $ turn += 1
     if parry:
         play music "Red Gaze Battle!.opus"
+            hide player syrup parry
+        show player syrup idle at battle_party1, zoomx(3) behind enemy
+        show enemy goop idle at battle_enemy1, zoomx(3)
+    if untouchable:
+        play music "Red Gaze Battle!.opus"
+        hide blightt
+        show player syrup idle at battle_party1, zoomx(3) behind enemy
+        show enemy goop idle at battle_enemy1, zoomx(3)
     $ guard = False
     show enemy goop idle at battle_enemy1, zoomx(3)
     show player syrup idle at battle_party1, zoomx(3) behind enemy
@@ -686,7 +697,22 @@ label battle_won:
 
 label battle_enemy_damage2:
 
-    show screen QTEdown(3, "missedit3") #seconds to fail, label to jump on fail
+$ d6roll = renpy.random.randint(1, 6)
+
+if d6roll < 4:
+    $ two = True
+
+    show screen QTEdown(2, "missedit3") #seconds to fail, label to jump on fail
+    menu:
+        "My, what lovely feet!"
+        "PARRY IT!!":
+            hide screen QTEdown
+            jump choice3
+
+else:
+    $ four = True
+
+    show screen QTEdown(4, "missedit3") #seconds to fail, label to jump on fail
     menu:
         "My, what lovely feet!"
         "PARRY IT!!":

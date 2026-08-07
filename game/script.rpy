@@ -793,7 +793,7 @@ label choice3_call:
 
 label choice3_done:
 
-    rg "Not this ti- Wait, what's that? Something is glowing inside the blown-up building."
+    rg "Not this ti- Wait, what's that? Something is glowing inside that old building over there."
 
     rg "Ohh, more of those marked stones from before."
 
@@ -932,7 +932,7 @@ label inv:
     with dissolve
     call screen inventory(inv) with Dissolve(.2)
     
-    jump test_menu3
+    jump test_menu2
 
 label victory2:
 
