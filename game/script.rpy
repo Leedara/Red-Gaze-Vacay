@@ -22,6 +22,21 @@ define electro = False
 define sis = False
 define untouchable = False
 
+## The crab on the beach and it's clickable: picking a fight with it jumps to crab_fight. Ignore it and the story walks on past without a battle.
+transform crab_notice:
+    ease .15 zoom 1.1
+
+screen crab_target():
+    zorder 50
+
+    imagebutton:
+        xalign 1.0
+        yalign 1.0
+        idle "crab"
+        hover At("crab", crab_notice)
+        focus_mask True # only the crab's own pixels are clickable, not its box
+        action Jump("crab_fight")
+
 label start:
     
     stop music fadeout 10
@@ -78,7 +93,7 @@ label start:
 
     show lyra2
 
-    show crab at right
+    show screen crab_target # the crab, but clickable
 
     show shark:
       xalign 0.9
@@ -98,6 +113,48 @@ label start:
 
     rg "I know, but... Last month was like a hundred years ago, I can't remember stuff like that."
 
+    hide screen crab_target
+    show crab at right # it stops being clickable, but it's still sitting there
+    jump beach_crab_skipped
+
+## BATTLE 1 -- the crab, on the beach. Only reached by clicking the crab.
+label crab_fight:
+
+    hide screen crab_target
+
+    "(Something clamps on Red Gaze's ankle. The crab has decided this stretch of sand is his!)"
+
+    rg "OW! You little-"
+
+    $ enemy = m_crab
+    $ battle_bg = "be ach"
+    call pre_battle
+
+    ## back from the fight -- put the beach scene back together
+    scene be ach
+    with dissolve
+
+    play music "Beach Vibes.opus"
+
+    show lyra
+
+    show shark:
+        xalign 0.9
+        yalign 0.6
+
+    show island:
+        xalign 0.25
+        yalign 0.6
+
+    sg "Wow. Remind me never to annoy you before lunch."
+
+    jump beach_crab_done
+
+## the player walked past the crab -- no fight, no EXP, no drop
+label beach_crab_skipped:
+    jump beach_crab_done
+
+label beach_crab_done:
     sg "I have a knife if you want to get some coconut water!"
 
 label start2:
@@ -461,7 +518,11 @@ label test_menu2:
 
     menu:
         "Ready - fight!":
-            jump pre_battle
+            ## BATTLE 2 -- the bartender, in the caves (straight-to-cave route)
+            $ enemy = m_goop
+            $ battle_bg = "ca ves"
+            call pre_battle
+            jump cave_victory
 
         "Inventory":
          jump invent
@@ -498,7 +559,7 @@ label invent:
     
     jump test_menu2
 
-label victory:
+label cave_victory:
 
     scene ca ves
     with dissolve
@@ -896,7 +957,11 @@ label test_menu3:
 
     menu:
         "Ready - fight!":
-            jump pre_battle
+            ## BATTLE 2 -- the bartender, in the caves (straight-to-cave route)
+            $ enemy = m_goop
+            $ battle_bg = "ca ves"
+            call pre_battle
+            jump cave_victory
 
         "Inventory":
          jump inv
@@ -933,83 +998,6 @@ label inv:
     call screen inventory(inv) with Dissolve(.2)
     
     jump test_menu2
-
-label victory2:
-
-
-    scene ca ves
-    with dissolve
-
-    stop music fadeout 10
-
-    play music "Cave Vibes.opus"
-
-    show lyra2
-
-    if lohp:
-        show lyra lohp
-        $ Tis_just_a_flesh_wound.grant()
-
-    show algae:
-      xalign 0.8
-      yalign 0.88
-
-    show starr:
-      xalign 0.98
-      yalign 0.85
-
-    show birb:
-      xalign 0.33
-      yalign 0.58
-
-    bar "Ungh, so strong. You don't like capybaras?"
-
-    rg "Huh, no that's not what I- Damn you Smiling Golem, you said that was a cool line."
-
-    n "Everyone likes capybaras."
-
-    rg "You know you're not supposed to interact with us, right?"
-
-    rg "My dear wallet. Just be grateful Lady Chrona is still tanning back at the beach."
-
-    bard "D-d-did you say Lady Chrona, one of the ten Elite Mercenaries??"
-
-    rg "Sure did. Now get out of here."
-
-    bard "Wait, but... You are not going to kill me?"
-
-    rg "Huh? Mercenaries only kill when they are working, we are not monsters killing for fun. But of course the Heroes wouldn't tell you that."
-
-    bar "No, they never said that."
-
-    bar "She was here."
-
-    rg "What?"
-
-    bar "Wink was here, in person. I have watched her streams for years, and she said that if I took out a Mercenary, I could ditch my boring office job to come and work for her."
-
-    rg "The pop star and Famous Hero, Wink. I see."
-
-    rg "Thanks. And just so you know, killing someone for the first time is... Not that easy. See you."
-
-    scene be ach
-
-    show lyra2
-
-    if lohp:
-        show lyra lohp
-
-    play music "Beach Vibes.opus"
-
-    show crab at right
-
-    show island:
-      xalign 0.25
-      yalign 0.6
-
-    lc "You're 9 minutes and 22 seconds late."
-
-    sg "Red Gaze, where have you been all day?"
 
 if ring:
 
