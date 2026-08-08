@@ -3,10 +3,11 @@
 
 init -2 python:
     class Enemy(store.object):
-        def __init__(self, name, id, info, MAXHP, ATK, DEF, LUC, RES, EXP=0, G=0, drop=None, boss=False):
+        def __init__(self, name, id, info, MAXHP, ATK, DEF, LUC, RES, EXP=0, G=0, drop=None, boss=False, sprite=None):
             self.name=name #enemy name as seen by the player
             self.id=id #string to be used as a codename
             self.info=info #enemy description
+            self.sprite=sprite or ("enemy " + id) #enemy sprite
 
             #STATS
             self.MAXHP=MAXHP #base HP value
@@ -32,7 +33,14 @@ init -2 python:
 define m_goop = Enemy(_("Hero minion"), "m_goop",
     info=_("Weak to most stuff."),
     MAXHP=200, ATK=4, DEF=7, LUC=0, RES=.5,
-    EXP=3, G=2, drop="item_water")
+    EXP=3, G=2, drop="item_water", sprite="enemy goop")
+
+# New crab enemy
+define m_crab = Enemy(_("Crab"), "m_crab",
+    info=_("Territorial crab with claws."),
+    MAXHP=65, ATK=2, DEF=2, LUC=1, RES=.5,
+    EXP=2, G=1, drop="item_water",
+    sprite="enemy crab")
 
 ##############################################################################
 # Battle transforms
@@ -322,3 +330,37 @@ image enemy goop hit:
     "enemy goop hit2"
 image enemy goop down:
     "enemy goop down1"
+
+## CRAB (battle 1) ENEMY SPRITES
+image enemy crab idle:
+    "enemy crab"
+    pause .12
+    "enemy crab"
+    pause .1
+    "enemy crab"
+    pause .12
+    "enemy crab"
+    pause .15
+    repeat
+image enemy crab move:
+    "enemy crab"
+image enemy crab attack:
+    "enemy crab"
+    xoffset 0
+    linear .06 xoffset -20
+    easein .2 xoffset 0
+image enemy crab dodge:
+    "enemy crab"
+    xoffset 0
+    linear .06 xoffset 20
+    easein .2 xoffset 0
+image enemy crab hit:
+    "enemy crab"
+    pause .1
+    "enemy crab"
+    pause .06
+    "enemy crab"
+    pause .06
+    "enemy crab"
+image enemy crab down:
+    "enemy crab"
