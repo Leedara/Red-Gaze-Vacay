@@ -3,10 +3,11 @@
 
 init -2 python:
     class Enemy(store.object):
-        def __init__(self, name, id, info, MAXHP, ATK, DEF, LUC, RES, EXP=0, G=0, drop=None, boss=False):
+        def __init__(self, name, id, info, MAXHP, ATK, DEF, LUC, RES, EXP=0, G=0, drop=None, boss=False, sprite=None):
             self.name=name #enemy name as seen by the player
             self.id=id #string to be used as a codename
             self.info=info #enemy description
+            self.sprite=sprite or ("enemy " + id) #enemy sprite
 
             #STATS
             self.MAXHP=MAXHP #base HP value
@@ -32,7 +33,14 @@ init -2 python:
 define m_goop = Enemy(_("Hero minion"), "m_goop",
     info=_("Weak to most stuff."),
     MAXHP=200, ATK=4, DEF=7, LUC=0, RES=.5,
-    EXP=3, G=2, drop="item_water")
+    EXP=3, G=2, drop="item_water", sprite="enemy goop")
+
+# New crab enemy
+define m_crab = Enemy(_("Crab"), "m_crab",
+    info=_("Territorial crab with claws."),
+    MAXHP=65, ATK=2, DEF=2, LUC=1, RES=.5,
+    EXP=2, G=1, drop="item_water",
+    sprite="enemy crab")
 
 ##############################################################################
 # Battle transforms
@@ -80,6 +88,14 @@ image player syrup electro:
     pause .1
     "player syrup idle3 electro"
     pause .1
+    "player syrup idle1"
+    pause .2
+    "player syrup idle2"
+    pause .2
+    "player syrup idle1"
+    pause .2
+    "player syrup idle3"
+    pause .2
     repeat
 
 image player syrup kerauno:
@@ -89,6 +105,14 @@ image player syrup kerauno:
     pause .1
     "player syrup idle3 kerauno"
     pause .1
+    "player syrup idle1"
+    pause .2
+    "player syrup idle2"
+    pause .2
+    "player syrup idle1"
+    pause .2
+    "player syrup idle3"
+    pause .2
     repeat
 
 image player syrup attack:
@@ -148,10 +172,13 @@ image player syrup redd:
     "slice2"
     pause .2
     "slice3"
-    "slice3"
     pause .1
     "slice2"
     pause .1
+    "slice3"
+    pause .05
+    "slice2"
+    pause .05
     "slice3"
     pause .5
     "blacc"
@@ -163,6 +190,10 @@ image player syrup slam:
     easein .2 xoffset 0
 
 image player syrup parry:
+    "player syrup guard2"
+    pause 1
+    "player syrup slooo"
+    pause 1.6
     "white"
     pause .05
     "slice"
@@ -284,6 +315,29 @@ image enemy goop idle:
     "enemy goop idle4"
     pause .15
     repeat
+
+image enemy goop idle burn:
+    "enemy goop idle1 burn"
+    pause .2
+    "enemy goop idle2 burn"
+    pause .2
+    "enemy goop idle3 burn"
+    pause .2
+    "enemy goop idle4 burn"
+    pause .2
+    repeat
+
+image enemy goop idle bburn:
+    "enemy goop idle1 bburn"
+    pause .2
+    "enemy goop idle2 bburn"
+    pause .2
+    "enemy goop idle3 bburn"
+    pause .2
+    "enemy goop idle4 bburn"
+    pause .2
+    repeat
+
 image enemy goop move:
     "enemy goop idle"
 image enemy goop attack:
@@ -306,3 +360,37 @@ image enemy goop hit:
     "enemy goop hit2"
 image enemy goop down:
     "enemy goop down1"
+
+## CRAB (battle 1) ENEMY SPRITES
+image enemy crab idle:
+    "enemy crab"
+    pause .12
+    "enemy crab"
+    pause .1
+    "enemy crab"
+    pause .12
+    "enemy crab"
+    pause .15
+    repeat
+image enemy crab move:
+    "enemy crab"
+image enemy crab attack:
+    "enemy crab"
+    xoffset 0
+    linear .06 xoffset -20
+    easein .2 xoffset 0
+image enemy crab dodge:
+    "enemy crab"
+    xoffset 0
+    linear .06 xoffset 20
+    easein .2 xoffset 0
+image enemy crab hit:
+    "enemy crab"
+    pause .1
+    "enemy crab"
+    pause .06
+    "enemy crab"
+    pause .06
+    "enemy crab"
+image enemy crab down:
+    "enemy crab"

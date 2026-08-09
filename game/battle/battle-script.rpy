@@ -7,7 +7,7 @@ define bt = Character(None, window_background="gui/textbox.png") #you can replac
 # add these in if you want: #what_font="", what_size=, what_color=""
 
 # player stat values are set by a list so it can check the corresponding stat to what level you are
-define HPvalues = [0, 30,34,42,48,50, 54,58,62,150]
+define HPvalues = [0, 30,34,42,48,50, 54,58,62,260]
 define ATKvalues = [0, 5,6,8,9,12, 15,19,23,27,32]
 define DEFvalues = [0, 3,4,5,7,9, 12,14,17,20,23]
 define LUCvalues = [0, 1,2,4,6,7, 9,10,12,13,15]
@@ -20,47 +20,52 @@ define lohp = False
 define poison = False
 define parry = False
 define frozen = False
+define two = False
+define four = False
+define bburn = False
 
-label pre_battle:
+default battling = False
 
-    ## put this block at the beginning of your start label
-    python:
-        # disable rollback during battle
-        battling = False
-        renpy.suspend_rollback(battling)
-
-        # battle stats
-        playerLV = 1
-        playerMAXHP = HPvalues[9]
-        playerHP = HPvalues[9]
-        playerATK = ATKvalues[5]
-        playerDEF = DEFvalues[5]
-        playerLUC = LUCvalues[1]
-        playerEXP = 0
+default playerLV = 1
+default playerMAXHP = HPvalues[9]
+default playerHP = HPvalues[9]
+default playerATK = ATKvalues[5]
+default playerDEF = DEFvalues[5]
+default playerLUC = LUCvalues[1]
+default playerEXP = 0
 
         # calculate exp to next level
-        nextEXP = round( 0.04 * (playerLV ** 3) + 0.8 * (playerLV ** 2) + 2 * playerLV)
-        # this formula is from disgaea, apparently!
-        # http://howtomakeanrpg.com/a/how-to-make-an-rpg-levels.html
+# exp needed to reach level 2. this formula is from disgaea, apparently!
+# http://howtomakeanrpg.com/a/how-to-make-an-rpg-levels.html
+default nextEXP = round( 0.04 * (1 ** 3) + 0.8 * (1 ** 2) + 2 * 1 )
 
-        # enemy defaults
-        enemyHP = 1
-        seen_enemies = []
+# enemy defaults
+default enemyHP = 1
+default seen_enemies = []
 
-    #
+# which background the battle is fought against. the caller sets this.
+default battle_bg = "ca ves"
+##############################################################################
+## ENTERING A BATTLE
+#
+# CALL this, don't jump to it -- the battle returns to whatever comes next:
+#
+#     $ enemy = m_crab
+#     $ battle_bg = "be ach"
+#     call pre_battle
+#     # ...the story picks up again right here once the fight is over
+#
+label pre_battle:
 
-    # put the rest of this in script.rpy wherever you want the enter a battle
-
-    scene ca ves # fullscreen background
+    scene expression battle_bg # fullscreen background
     show stage bg # frame the characters stand inside (feel free to remove)
 
     play music "Red Gaze Battle!.opus"
 
-    # set the enemy to fight
-    $ enemy = m_goop
-
-    # and show their sprite!
-    show enemy goop idle at battle_enemy1, zoomx(3)
+    # show the enemy's sprite. this uses the "enemy" tag, which is why every
+    # "show enemy hit" / "show enemy down" below keeps working no matter which
+    # enemy is on screen -- Ren'Py holds on to the enemy's own attribute.
+    $ renpy.show(enemy.sprite + " idle", at_list=[battle_enemy1, zoomx(3)])
 
 label battle_start:
 
@@ -79,6 +84,24 @@ label battle_start:
         defbuff = 0
         CRIT = False
 
+        # Set to false here so things like burning and poisoning does not persist between battles.
+        burn = False
+        sugar = False
+        heart = False
+        guard = False
+        e1 = False
+        e2 = False
+        lohp = False
+        poison = False
+        parry = False
+        frozen = False
+        two = False
+        four = False
+
+        # start every battle (and every retry after a defeat) at full health
+        playerHP = playerMAXHP
+
+
         enemy.see_enemy()
         enemyHP = enemy.MAXHP
 
@@ -86,25 +109,38 @@ label battle_start:
 
     n "[enemy.name!t] picks a fight!!"
 
-    show screen battleoverlay
+    show screen battleoverlay
+
 label battle_turn:
     # start of player turn
     $ turn += 1
-    if parry:
-        play music "Red Gaze Battle!.opus"
     $ guard = False
-    show enemy goop idle at battle_enemy1, zoomx(3)
+    show enemy idle at battle_enemy1, zoomx(3)
     show player syrup idle at battle_party1, zoomx(3) behind enemy
     play music "Red Gaze Battle!.opus"
-
+    if parry:
+        play music "Red Gaze Battle!.opus"
+        hide player syrup parry
+        show player syrup idle at battle_party1, zoomx(3) behind enemy
+        show enemy idle at battle_enemy1, zoomx(3)
+    if untouchable:
+        play music "Red Gaze Battle!.opus"
+        hide blightt
+        show player syrup idle at battle_party1, zoomx(3) behind enemy
+        show enemy idle at battle_enemy1, zoomx(3)
+    
     if lohp:
         show player idlez
-
+    if burn:
+        show enemy goop idle burn
+    if burn and sugar:
+        show enemy goop idle bburn
     if not lohp and not charge > 9 and charge > 4:
         show player syrup electro
+        play sound "electroo.mp3"
     if not lohp and charge > 9:
-        show player syrup kerauno 
-
+        show player syrup kerauno
+        play sound "keraunoo.mp3"
     call screen battle_menu
 
 label battle_secret:
@@ -117,14 +153,15 @@ label battle_secret:
 
 label battle_attack:
     # damage calculation
-    $ damage = playerATK*2 + atkbuff - enemy.DEF*2
+    $ damage = playerATK + atkbuff - enemy.DEF*2
     n "Red Gaze kicks!"
     show player syrup attack
     play sound "kick.mp3"
 
     if frozen:
-        $ damage = playerATK*5 + atkbuff - enemy.DEF*2
+        $ damage = playerATK*2.5 + atkbuff - enemy.DEF*2
         n "Red Gaze breaks the Frozen foe!"
+        $ frozen = False
         show player syrup attack
         play sound "kick.mp3"
 
@@ -228,7 +265,6 @@ label battle_frost:
 
     $ d10roll = renpy.random.randint(1, 10)
 
-    # 1 in 10chance of critical hit
     if d10roll > 2:
         $ frozen = True
         $ damage = int(damage*2.1)
@@ -398,8 +434,8 @@ label battle_defend:
 
 label battle_slam:
     show player syrup slam
-    $ damage = playerATK*4.5 + atkbuff - enemy.DEF*2
-    n "Red Gaze is shattering her foe!"
+    $ damage = playerATK*3.5 + atkbuff - enemy.DEF*2
+    n "Red Gaze is shattering her foe! High Brutal Hit damage."
     $ frozen = False
     jump battle_enemy_turn
     if lohp:
@@ -409,6 +445,30 @@ label battle_slam:
 
     # 1 in 6 chance of critical hit
     if d6roll==3:
+        $ CRIT = True
+        $ damage = int(damage*2.3)
+
+    jump battle_damage
+
+    $ d10roll = renpy.random.randint(1, 10)
+
+    if d10roll==1:
+
+     jump battle_miss
+
+label battle_impact:
+    show player syrup slam
+    $ damage = playerATK*4 + atkbuff - enemy.DEF*2
+    n "Red Gaze crushes her victim to pieces! High Brutal Hit damage and chance."
+    $ frozen = False
+    jump battle_enemy_turn
+    if lohp:
+        show player guardz
+
+    $ d6roll = renpy.random.randint(1, 6)
+
+    # 1 in 6 chance of critical hit
+    if not d6roll==3:
         $ CRIT = True
         $ damage = int(damage*2.3)
 
@@ -431,6 +491,7 @@ label battle_sugar:
 
 label battle_poison:
     $ poison = True
+    $ poison_turns = 3
     $ inv.remove("item_heart")
     show player guard
     n "Red Gaze decides to be a vegan."
@@ -497,6 +558,7 @@ label battle_attack_result:
 label battle_enemy_turn:
 
     if burn and not sugar:
+        show enemy goop idle burn
         "Hero Burns!"
         # can't deal negative damage
         $ damage = playerATK
@@ -513,8 +575,17 @@ label battle_enemy_turn:
         if enemyHP < 0:
             jump battle_won
 
+        # Remove burn when it expires
+        if burn_turns <= 0:
+            $ burn = False
+            "The burn wears off."
+        if enemyHP < 0:
+            jump battle_won
+
     if burn and sugar:
-        n "The target is hurt by Black Burn!"
+        show enemy goop idle bburn  
+        $ bburn = True  
+        n "The flames react with the sugar, transforming into Black Burn!"
         # can't deal negative damage
         $ damage = playerATK*0.5
         if damage < 0:
@@ -525,14 +596,20 @@ label battle_enemy_turn:
             jump battle_won
 
     if poison:
-        "Hero is hurt by poison!"
+        $ poison = True
+        "Hero is hurt by Poison!"
         # can't deal negative damage
         $ damage = playerATK*1.5
         if damage < 0:
             $ damage = 0
         $ enemyHP -= damage
         # enemy can't have negative hp
+        $ poison_turns -= 1
+
         # Remove burn when it expires
+        if poison_turns <= 0:
+            $ Poison = False
+            "The Poison wears off."
         if enemyHP < 0:
             jump battle_won
 
@@ -672,21 +749,34 @@ label battle_won:
 
     stop music fadeout 1
 
-    n "HERO STOPPED!"
-    jump victory2
+    n "[enemy.name!t] STOPPED!"
 
-    # gain exp and possibly level up
-    if not playerLV==10: # level cap
-        $ playerEXP += enemy.EXP
-        n "Red Gaze gains [enemy.EXP] experience points!"
-        if playerEXP >= int(nextEXP):
-            call levelup
+    # if not playerLV==10: # level cap
+    #     $ playerEXP += enemy.EXP
+    #     n "Red Gaze gains [enemy.EXP] experience points!"
+    #     if playerEXP >= int(nextEXP):
+    #         call levelup
 
-    jump battle_done
+    jump battle_end
 
 label battle_enemy_damage2:
 
-    show screen QTEdown(3, "missedit3") #seconds to fail, label to jump on fail
+$ d6roll = renpy.random.randint(1, 6)
+
+if d6roll < 4:
+    $ two = True
+
+    show screen QTEdown(2, "missedit3") #seconds to fail, label to jump on fail
+    menu:
+        "My, what lovely feet!"
+        "PARRY IT!!":
+            hide screen QTEdown
+            jump choice3
+
+else:
+    $ four = True
+
+    show screen QTEdown(4, "missedit3") #seconds to fail, label to jump on fail
     menu:
         "My, what lovely feet!"
         "PARRY IT!!":
@@ -717,17 +807,6 @@ label missedit3:
 label choice3: 
     show player syrup parry
     $ damage = playerATK
-    if untouchable:
-        $ damage = playerATK*5
-
-    if untouchable and charge > 4:
-        play sound "parry3.mp3"        
-        show blightt:
-          xalign .65
-          yalign .5
-        $ damage = playerATK*6.5
-        $ charge -= 5
-
     $ d6roll = renpy.random.randint(1, 6)
 
     # 1 in 6 chance of critical hit
@@ -740,15 +819,53 @@ label choice3:
     if d10roll==1:
 
      jump battle_miss
-    
+
     $ enemyHP -= damage
     # enemy can't have negative hp
     if enemyHP < 0:
         jump battle_won2
-    play music "Red Gaze Battle!.opus"
-    play sound "parry3.mp3"
-    n "Nice job!!"
+    play sound "slooo.mp3" volume 2.0
+    queue sound "parry3.mp3" volume 1.5
+    n "Devastating!!"
     jump battle_turn
+
+    if untouchable:
+        $ damage = playerATK*5
+
+        $ d6roll = renpy.random.randint(1, 6)
+
+        # 1 in 6 chance of critical hit
+        if d6roll==3:
+            $ CRIT = True
+            $ damage = int(damage*1.5)
+
+        $ d10roll = renpy.random.randint(1, 10)
+
+        if d10roll==1:
+
+         jump battle_miss
+
+    if untouchable and charge > 4:       
+        show blightt:
+          xalign .65
+          yalign .5
+
+
+        $ damage = playerATK*6.5
+        $ charge -= 5
+
+        $ d6roll = renpy.random.randint(1, 6)
+
+        # 1 in 6 chance of critical hit
+        if d6roll==3:
+            $ CRIT = True
+            $ damage = int(damage*1.5)
+
+        $ d10roll = renpy.random.randint(1, 10)
+
+        if d10roll==1:
+
+         jump battle_miss
 
 label battle_lowhp2:
     rg "Ugh, not bad...!"
@@ -774,17 +891,15 @@ label battle_won2:
 
     stop music fadeout 1
 
-    n "HERO STOPPED!"
-    jump victory2
+    n "[enemy.name!t] STOPPED!"
 
-    # gain exp and possibly level up
-    if not playerLV==10: # level cap
-        $ playerEXP += enemy.EXP
-        n "Red Gaze gains [enemy.EXP] experience points!"
-        if playerEXP >= int(nextEXP):
-            call levelup
+    # if not playerLV==10: # level cap
+    #     $ playerEXP += enemy.EXP
+    #     n "Red Gaze gains [enemy.EXP] experience points!"
+    #     if playerEXP >= int(nextEXP):
+    #         call levelup
 
-    jump battle_done
+    jump battle_end
 
 label battle_enemy_damage3:
 
@@ -892,17 +1007,16 @@ label battle_won3:
 
     stop music fadeout 1
 
-    n "HERO STOPPED!"
-    jump victory
+    n "[enemy.name!t] STOPPED!"
 
     # gain exp and possibly level up
-    if not playerLV==10: # level cap
-        $ playerEXP += enemy.EXP
-        n "Red Gaze gains [enemy.EXP] experience points!"
-        if playerEXP >= int(nextEXP):
-            call levelup
+      # if not playerLV==10: # level cap
+    #     $ playerEXP += enemy.EXP
+    #     n "Red Gaze gains [enemy.EXP] experience points!"
+    #     if playerEXP >= int(nextEXP):
+    #         call levelup
 
-    jump battle_done
+    jump battle_end
 
 ##############################################################################
 ## OUTCOME
@@ -934,3 +1048,15 @@ label battle_drops:
     n "The [enemy.name!t] left behind a \n{color=#007dff}[newitem.name!t]{/color}!"
 
     hide screen reward
+
+label battle_end:
+    # put the game back the way it was before the battle started
+    python:
+        _game_menu_screen = "save"
+        _history = True
+        quick_menu = True
+
+        battling = False
+
+    # hand control back to whatever did "call pre_battle"
+    return

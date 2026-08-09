@@ -38,7 +38,7 @@ screen battle_menu():
         if showbattlemenu:
             textbutton _("{color=#0080c0}Kick{/color}"):
                 action Jump("battle_attack")
-                tooltip _("{color=#fff}Do like the honey badgers and go for the balls! Deals low damage.")
+                tooltip _("{color=#fff}Do like the honey badgers and go for the balls! Deals low Blunt damage.")
 
             if not charge > 9 and charge > 4:
                 textbutton _("{color=#f00}Hollow Thunder{/color}"):
@@ -93,6 +93,11 @@ screen battle_menu():
                 textbutton _("{color=#f00}Steely Slam{/color}"):
                     action Jump("battle_slam")
                     tooltip _("{color=#fff}Shatter your Frozen opponent!{/color}")                           
+
+            if frozen and lucky: 
+                textbutton _("{color=#f00}Herakles Impact{/color}"):
+                    action Jump("battle_impact")
+                    tooltip _("{color=#fff}Crush your Frozen victim to pieces!{/color}")  
 
             if check_inv_for(battle_items):
                 textbutton _("{color=#0080c0}Items{/color}"):
@@ -159,7 +164,20 @@ screen battleoverlay():
 
     label _("BATTLE!") style "battle_label" align (.5,.05)
 
-    label _("Turn: [turn]{vspace=1}Charge: [charge]") xalign .75 yalign .1 style "battleinfo_label"
+    if not burn and not poison and not frozen:
+        label _("Turn: [turn]{vspace=1}Charge: [charge]") xalign .75 yalign .1 style "battleinfo_label"
+
+    if burn and not sugar:
+        label _("Turn: [turn]{vspace=1}Charge: [charge]{vspace=1}Burn(Hero): [burn]") xalign .75 yalign .1 style "battleinfo_label"
+
+    if burn and sugar:
+        label _("Turn: [turn]{vspace=1}Charge: [charge]{vspace=1}Black Burn(Hero): [bburn]") xalign .75 yalign .1 style "battleinfo_label"
+
+    if poison:
+        label _("Turn: [turn]{vspace=1}Charge: [charge]{vspace=1}Poison(Hero): [poison]") xalign .75 yalign .1 style "battleinfo_label"
+
+    if frozen:
+        label _("Turn: [turn]{vspace=1}Charge: [charge]{vspace=1}Frozen(Hero): [frozen]") xalign .75 yalign .1 style "battleinfo_label"
 
     # HP bars
     bar value playerHP range playerMAXHP style "battle_bar" at battle_party1
