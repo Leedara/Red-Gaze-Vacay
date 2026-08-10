@@ -175,20 +175,20 @@ define item_sword = (_("Demon Slayer Sword"), "sword", 499999999999,
 define item_roses = (_("{color=#f00}{size=-6}Stone of Roses{/color}"), "roses", 2,
     _("{size=-6}A stone that grants a skill which summons thorns that can heal from Poison.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land.{/size}"), "item_roses")
 
-define item_untouchable = (_("{color=#f00}Stone of the Untouchable{/color}"), "untouchable", 2,
-    _("A stone that grants a massive increase to Parry damage.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land."), "item_untouchable")
+define item_untouchable = (_("{color=#f00}Stone of the Untouchable. Pairs well with Stone of Lightning.{/color}"), "untouchable", 2,
+    _("A stone that grants a massive increase to Parry damage.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land. "), "item_untouchable")
 
 define item_fire = (_("{color=#f00}Stone of Fire{/color}"), "fire", 2,
     _("A stone that grants the burning skill Nernas Flameshot.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land."), "item_fire")
 
 define item_ice = (_("{color=#f00}Stone of Ice{/color}"), "ice", 2,
-    _("{size=-6}A stone that grants access to a chilling skill that can Freeze the target, making them take more damage from said skill.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land.{/size}"), "item_ice")
+    _("{size=-6}A stone that grants access to a chilling skill that can Freeze the target.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land.{/size}"), "item_ice")
 
 define item_lightningg = (_("{color=#f00}Stone of Lightning{/color}"), "lightningg", 2,
     _("{size=-6}A stone that makes your Kick-skill build up Charge instead of dealing damage. At certain stacks of Charge, new skills can be used.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land.{/size}"), "item_lightningg")
 
 define item_luck = (_("{color=#f00}{size=-6}Stone of Luck{/color}"), "luck", 2,
-    _("{size=-6}A stone that grants a skill which reaps less rewards, but does so more often.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land.{/size}"), "item_luck")
+    _("{size=-6}A stone that grants a skill which weakens Brutal Hits, but makes them more common. Pairs well with Stone of Ice.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land.{/size}"), "item_luck")
 
 define item_sisyphus = (_("{color=#f00}Stone of Sisyphus{/color}"), "sisyphus", 2,
     _("{size=-6}Just an abnormally heavy stone. Will grant no benefits to its carrier.{vspace=1} {vspace=1}Items with these enchanted symbols are said to come from the ancient civilization of a cold, northern land. However, this is just an ordinary rock.{/size}"), "item_sisyphus")
