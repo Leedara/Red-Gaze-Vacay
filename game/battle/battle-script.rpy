@@ -11,6 +11,7 @@ define HPvalues = [0, 30,34,42,48,50, 54,58,62,260]
 define ATKvalues = [0, 5,6,8,9,12, 15,19,23,27,32]
 define DEFvalues = [0, 3,4,5,7,9, 12,14,17,20,23]
 define LUCvalues = [0, 1,2,4,6,7, 9,10,12,13,15]
+define SPvalues = [0, 100,100,100,100,100, 100,100,100,100,100]
 define burn = False
 define sugar = False
 define guard = False
@@ -28,10 +29,12 @@ default battling = False
 
 default playerLV = 1
 default playerMAXHP = HPvalues[9]
+default playerLUC = LUCvalues[9]
 default playerHP = HPvalues[9]
 default playerATK = ATKvalues[5]
 default playerDEF = DEFvalues[5]
-default playerLUC = LUCvalues[1]
+default playerSP = SPvalues[5]
+default playerMAXSP = SPvalues[5]
 default playerEXP = 0
 
         # calculate exp to next level
@@ -226,6 +229,7 @@ label battle_thunder:
 
 label battle_serpent:
     $ poison = False
+    $ playerSP -= 10
     $ damage = playerATK*7.5 + atkbuff - enemy.DEF*2
     show player syrup lightning 
     play sound "hollow.mp3"
@@ -260,6 +264,7 @@ label battle_frost:
     show player syrup hail
     # damage calculation
     $ damage = playerATK*3 + atkbuff - enemy.DEF*2
+    $ playerSP -= 20   
     n "Red Gaze attacks!"
     play sound "ice.mp3"
 
@@ -280,6 +285,7 @@ label battle_frost:
 label battle_rose:
 show player syrup vines
 $ damage = playerATK*3 + atkbuff - enemy.DEF*2
+$ playerSP -= 20   
 rg "Be torn to shreds."
 
 # roll for crits/misses
@@ -302,6 +308,7 @@ if poison:
     play sound "whip.mp3"
     $ damage = int(playerMAXHP/10)
     $ playerHP += damage
+    $ playerSP -= 20 
     show screen showheal
     if playerHP > playerMAXHP:
         $ playerHP = playerMAXHP
@@ -330,6 +337,7 @@ label battle_fire:
     $ damage = playerATK*2.5 + atkbuff - enemy.DEF*2
     $ burn = True
     $ burn_turns = 3
+    $ playerSP -= 20   
     n "Red Gaze attacks!"
     show player syrup fire
     play sound "flame.mp3"
@@ -355,7 +363,8 @@ label battle_fire:
 label battle_red:
     # damage calculation
     $ damage = playerATK*4 + atkbuff - enemy.DEF*2
-    rg "Rip, Muramasa."
+    $ playerSP -= 15 
+    n "Rip, Muramasa."
     show player syrup red
     play sound "red.mp3"
 
@@ -378,7 +387,8 @@ label battle_red:
 label battle_redluck:
     # damage calculation
     $ damage = playerATK*4 + atkbuff - enemy.DEF*2
-    rg "Rip, Muramasa."
+    $ playerSP -= 20   
+    n "Rip, Muramasa."
     show player syrup red
     play sound "red.mp3"
 
@@ -402,7 +412,8 @@ label battle_redd:
     $ Last_Resort.grant()    
     # damage calculation
     $ damage = playerATK*9.5 + atkbuff - enemy.DEF*2
-    rg "This is the end."
+    $ playerSP -= 5   
+    n "This is the end."
     show player syrup redd
     play sound "red.mp3"
     play sound "sword.mp3"
@@ -435,6 +446,7 @@ label battle_defend:
 label battle_slam:
     show player syrup slam
     $ damage = playerATK*3.5 + atkbuff - enemy.DEF*2
+    $ playerSP -= 20   
     n "Red Gaze is shattering her foe! High Brutal Hit damage."
     $ frozen = False
     jump battle_enemy_turn
@@ -459,6 +471,7 @@ label battle_slam:
 label battle_impact:
     show player syrup slam
     $ damage = playerATK*4 + atkbuff - enemy.DEF*2
+    $ playerSP -= 25
     n "Red Gaze crushes her victim to pieces! High Brutal Hit damage and chance."
     $ frozen = False
     jump battle_enemy_turn
