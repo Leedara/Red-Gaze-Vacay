@@ -7,7 +7,7 @@ define bt = Character(None, window_background="gui/textbox.png") #you can replac
 # add these in if you want: #what_font="", what_size=, what_color=""
 
 # player stat values are set by a list so it can check the corresponding stat to what level you are
-define HPvalues = [0, 30,34,42,48,50, 54,58,62,260]
+define HPvalues = [0, 30,34,42,48,50, 54,58,62,150]
 define ATKvalues = [0, 5,6,8,9,12, 15,19,23,27,32]
 define DEFvalues = [0, 3,4,5,7,9, 12,14,17,20,23]
 define LUCvalues = [0, 1,2,4,6,7, 9,10,12,13,15]
@@ -20,58 +20,47 @@ define lohp = False
 define poison = False
 define parry = False
 define frozen = False
-define two = False
-define four = False
 
-##############################################################################
-## PERSISTENT BATTLE STATE
-#
-# These used to be a python block inside pre_battle, which meant entering a
-# second battle reset Red Gaze to level 1 and wiped her EXP. As defaults they
-# are set once when the game starts, so progress carries between battles.
-
-default battling = False
-
-default playerLV = 1
-default playerMAXHP = HPvalues[9]
-default playerHP = HPvalues[9]
-default playerATK = ATKvalues[5]
-default playerDEF = DEFvalues[5]
-default playerLUC = LUCvalues[1]
-default playerEXP = 0
-
-# exp needed to reach level 2. this formula is from disgaea, apparently!
-# http://howtomakeanrpg.com/a/how-to-make-an-rpg-levels.html
-default nextEXP = round( 0.04 * (1 ** 3) + 0.8 * (1 ** 2) + 2 * 1 )
-
-# enemy defaults
-default enemyHP = 1
-default seen_enemies = []
-
-# which background the battle is fought against. the caller sets this.
-default battle_bg = "ca ves"
-
-##############################################################################
-## ENTERING A BATTLE
-#
-# CALL this, don't jump to it -- the battle returns to whatever comes next:
-#
-#     $ enemy = m_crab
-#     $ battle_bg = "be ach"
-#     call pre_battle
-#     # ...the story picks up again right here once the fight is over
-#
 label pre_battle:
 
-    scene expression battle_bg # fullscreen background
+    ## put this block at the beginning of your start label
+    python:
+        # disable rollback during battle
+        battling = False
+        renpy.suspend_rollback(battling)
+
+        # battle stats
+        playerLV = 1
+        playerMAXHP = HPvalues[9]
+        playerHP = HPvalues[9]
+        playerATK = ATKvalues[5]
+        playerDEF = DEFvalues[5]
+        playerLUC = LUCvalues[1]
+        playerEXP = 0
+
+        # calculate exp to next level
+        nextEXP = round( 0.04 * (playerLV ** 3) + 0.8 * (playerLV ** 2) + 2 * playerLV)
+        # this formula is from disgaea, apparently!
+        # http://howtomakeanrpg.com/a/how-to-make-an-rpg-levels.html
+
+        # enemy defaults
+        enemyHP = 1
+        seen_enemies = []
+
+    #
+
+    # put the rest of this in script.rpy wherever you want the enter a battle
+
+    scene ca ves # fullscreen background
     show stage bg # frame the characters stand inside (feel free to remove)
 
     play music "Red Gaze Battle!.opus"
 
-    # show the enemy's sprite. this uses the "enemy" tag, which is why every
-    # "show enemy hit" / "show enemy down" below keeps working no matter which
-    # enemy is on screen -- Ren'Py holds on to the enemy's own attribute.
-    $ renpy.show(enemy.sprite + " idle", at_list=[battle_enemy1, zoomx(3)])
+    # set the enemy to fight
+    $ enemy = m_goop
+
+    # and show their sprite!
+    show enemy goop idle at battle_enemy1, zoomx(3)
 
 label battle_start:
 
@@ -90,23 +79,6 @@ label battle_start:
         defbuff = 0
         CRIT = False
 
-        # Set to false here so things like burning and poisoning does not persist between battles.
-        burn = False
-        sugar = False
-        heart = False
-        guard = False
-        e1 = False
-        e2 = False
-        lohp = False
-        poison = False
-        parry = False
-        frozen = False
-        two = False
-        four = False
-
-        # start every battle (and every retry after a defeat) at full health
-        playerHP = playerMAXHP
-
         enemy.see_enemy()
         enemyHP = enemy.MAXHP
 
@@ -114,34 +86,24 @@ label battle_start:
 
     n "[enemy.name!t] picks a fight!!"
 
-    show screen battleoverlay
-
+    show screen battleoverlay
 label battle_turn:
     # start of player turn
     $ turn += 1
     if parry:
         play music "Red Gaze Battle!.opus"
-        hide player syrup parry
-        show player syrup idle at battle_party1, zoomx(3) behind enemy
-        show enemy idle at battle_enemy1, zoomx(3)
-    if untouchable:
-        play music "Red Gaze Battle!.opus"
-        hide blightt
-        show player syrup idle at battle_party1, zoomx(3) behind enemy
-        show enemy idle at battle_enemy1, zoomx(3)
-
     $ guard = False
-    show enemy idle at battle_enemy1, zoomx(3)
+    show enemy goop idle at battle_enemy1, zoomx(3)
     show player syrup idle at battle_party1, zoomx(3) behind enemy
     play music "Red Gaze Battle!.opus"
-    
+
     if lohp:
         show player idlez
 
     if not lohp and not charge > 9 and charge > 4:
         show player syrup electro
     if not lohp and charge > 9:
-        show player syrup kerauno
+        show player syrup kerauno 
 
     call screen battle_menu
 
@@ -710,35 +672,21 @@ label battle_won:
 
     stop music fadeout 1
 
-    n "[enemy.name!t] STOPPED!"
+    n "HERO STOPPED!"
+    jump victory2
 
     # gain exp and possibly level up
-    # if not playerLV==10: # level cap
-    #     $ playerEXP += enemy.EXP
-    #     n "Red Gaze gains [enemy.EXP] experience points!"
-    #     if playerEXP >= int(nextEXP):
-    #         call levelup
+    if not playerLV==10: # level cap
+        $ playerEXP += enemy.EXP
+        n "Red Gaze gains [enemy.EXP] experience points!"
+        if playerEXP >= int(nextEXP):
+            call levelup
 
-    jump battle_end
+    jump battle_done
 
 label battle_enemy_damage2:
 
-$ d6roll = renpy.random.randint(1, 6)
-
-if d6roll < 4:
-    $ two = True
-
-    show screen QTEdown(2, "missedit3") #seconds to fail, label to jump on fail
-    menu:
-        "My, what lovely feet!"
-        "PARRY IT!!":
-            hide screen QTEdown
-            jump choice3
-
-else:
-    $ four = True
-
-    show screen QTEdown(4, "missedit3") #seconds to fail, label to jump on fail
+    show screen QTEdown(3, "missedit3") #seconds to fail, label to jump on fail
     menu:
         "My, what lovely feet!"
         "PARRY IT!!":
@@ -826,16 +774,17 @@ label battle_won2:
 
     stop music fadeout 1
 
-    n "[enemy.name!t] STOPPED!"
+    n "HERO STOPPED!"
+    jump victory2
 
     # gain exp and possibly level up
-    # if not playerLV==10: # level cap
-    #     $ playerEXP += enemy.EXP
-    #     n "Red Gaze gains [enemy.EXP] experience points!"
-    #     if playerEXP >= int(nextEXP):
-    #         call levelup
+    if not playerLV==10: # level cap
+        $ playerEXP += enemy.EXP
+        n "Red Gaze gains [enemy.EXP] experience points!"
+        if playerEXP >= int(nextEXP):
+            call levelup
 
-    jump battle_end
+    jump battle_done
 
 label battle_enemy_damage3:
 
@@ -943,16 +892,17 @@ label battle_won3:
 
     stop music fadeout 1
 
-    n "[enemy.name!t] STOPPED!"
+    n "HERO STOPPED!"
+    jump victory
 
     # gain exp and possibly level up
-    # if not playerLV==10: # level cap
-    #     $ playerEXP += enemy.EXP
-    #     n "Red Gaze gains [enemy.EXP] experience points!"
-    #     if playerEXP >= int(nextEXP):
-    #         call levelup
+    if not playerLV==10: # level cap
+        $ playerEXP += enemy.EXP
+        n "Red Gaze gains [enemy.EXP] experience points!"
+        if playerEXP >= int(nextEXP):
+            call levelup
 
-    jump battle_end
+    jump battle_done
 
 ##############################################################################
 ## OUTCOME
@@ -984,15 +934,3 @@ label battle_drops:
     n "The [enemy.name!t] left behind a \n{color=#007dff}[newitem.name!t]{/color}!"
 
     hide screen reward
-
-label battle_end:
-    # put the game back the way it was before the battle started
-    python:
-        _game_menu_screen = "save"
-        _history = True
-        quick_menu = True
-
-        battling = False
-
-    # hand control back to whatever did "call pre_battle"
-    return
