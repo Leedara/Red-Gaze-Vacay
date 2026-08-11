@@ -1,0 +1,15 @@
+# Line endings are normalized to LF in the repository and checked out as LF on
+# every platform, so a Windows and a macOS working tree stay byte-identical.
+* text=auto eol=lf
+
+# Ren'Py sources.
+*.rpy    text eol=lf
+*.rpym   text eol=lf
+
+# Binary assets. Marked explicitly so no heuristic ever rewrites them.
+*.png    binary
+*.jpg    binary
+*.mp3    binary
+*.opus   binary
+*.rpyc   binary
+*.rpymc  binary
