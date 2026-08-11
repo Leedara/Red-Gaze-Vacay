@@ -56,31 +56,32 @@ screen battle_menu():
                     action Jump("battle_serpent")
                     tooltip _("{color=#fff}Unleash that built-up Charge! Deals high damage.")
 
-            if thorns:
+            if thorns and playerSP > 19:
                 textbutton _("{color=#0080c0}Emerald Samsara{/color}"):
                     action Jump("battle_rose")
                     tooltip _("{color=#fff}Rend your foe with sharp vines! Deals medium damage. Can heal when striking a Poisoned target.")
 
-            if ice:
+            if ice and playerSP > 19:
                 textbutton _("{color=#0080c0}Impaling Tears{/color}"):
                     action Jump("battle_frost")
                     tooltip _("{color=#fff}Summon a rain of icicles! Deals medium damage. High chance to apply Freeze.")
 
-            if flame:
+            if flame and playerSP > 19:
                 textbutton _("{color=#0080c0}Nernas Flareshot{/color}"):
                     action Jump("battle_fire")
                     tooltip _("{color=#fff}A lesser version of Nernas Sunshot! Deals medium damage. Applies Burn.{/color}")
 
-            textbutton _("{color=#0080c0}Muramasa: Red Hunt{/color}"):
-                action Jump("battle_red")
-                tooltip _("{color=#fff}Slice six times rapidly! Deals medium damage.{/color}")
+            if playerSP > 19:
+                textbutton _("{color=#0080c0}Muramasa: Red Hunt{/color}"):
+                    action Jump("battle_red")
+                    tooltip _("{color=#fff}Slice six times rapidly! Deals medium damage.{/color}")
 
-            if lucky:
+            if lucky and playerSP > 19:
                 textbutton _("{color=#0080c0}Muramasa: Fracturing Red Hunt{/color}"):
                     action Jump("battle_redluck")
                     tooltip _("{color=#fff}Slice six times rapidly! Deals medium damage. High chance for a Brutal Blow.{/color}")
 
-            if lohp and end: 
+            if lohp and end and playerSP > 4:
                 textbutton _("{color=#f00}{size=-6}Muramasa: Oblivion Hunt{/size}{/color}"):
                     action Jump("battle_redd")
                     tooltip _("{color=#f00}Call your hardened blood to your blade, and exterminate your foe! Deals extreme damage.{/color}")
@@ -88,13 +89,13 @@ screen battle_menu():
             textbutton _("{color=#0080c0}Steely Resolve{/color}"):
                 action Jump("battle_defend")
                 tooltip _("{color=#fff}Focus your mind and muscles! Halves incoming damage.{/color}")
-
-            if frozen: 
+                
+            if frozen and playerSP > 19:    
                 textbutton _("{color=#f00}Steely Slam{/color}"):
                     action Jump("battle_slam")
                     tooltip _("{color=#fff}Shatter your Frozen opponent!{/color}")                           
 
-            if frozen and lucky: 
+            if frozen and lucky and playerSP > 24: 
                 textbutton _("{color=#f00}Herakles Impact{/color}"):
                     action Jump("battle_impact")
                     tooltip _("{color=#fff}Crush your Frozen victim to pieces!{/color}")  
@@ -189,13 +190,12 @@ screen battleoverlay():
         vbox:
             hbox:
                 xfill True
-                label _("Lyra Red Gaze Sanchez")
+                label _(" Red Gaze ")
                 text _("Lv [playerLV]") style "battleHP_text" xalign 1.0
-
             if not playerHP < playerMAXHP/3:
-                text _("HP: [playerHP] / [playerMAXHP]") style "battleHP_text"
+                text _("HP: [playerHP] / [playerMAXHP]{vspace=1}SP: [playerSP] / [playerMAXSP]") style "battleHP_text"
             else:
-                text _("HP: [playerHP] / [playerMAXHP]") style "battleLOWHP_text"
+                text _("HP: [playerHP] / [playerMAXHP]{vspace=1}SP: [playerSP] / [playerMAXSP]") style "battleLOWHP_text"
 
             frame:
                 style "battleinfo_stat_frame"
